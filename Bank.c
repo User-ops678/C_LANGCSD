@@ -2,6 +2,12 @@
 #include<stdlib.h>
 #include<time.h>
 #include<string.h>
+typedef int bool;
+
+
+#define true 1
+#define false 0
+
 
 typedef struct Account {
 	int ID;
@@ -14,6 +20,17 @@ typedef struct Node {
 	int data;
 	struct Node* next;
 } start;
+
+
+bool confirmExit() {
+	char ans[3];
+	printf("Are you sure you want to exit? (Y/N) ");
+	scanf("%s", ans);
+	if (ans[0] == 'y' || ans[0] == 'Y') {
+		return true;
+	}
+	return false;
+}
 
 struct Node* createNode(int value) {
 	struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
@@ -74,10 +91,16 @@ int main() {
 		scanf("%d", &sel);
 		switch(sel) {
 			case 1:
-				struct Account* myAcc = createAccount("John Doe", 1000.0f);
+				char accName[100];
+				int Deposit;
+				printf("Enter Account Name: ");
+				scanf("%s", accName);
+				printf("Enter First Deposit: ");
+				scanf("%d", &Deposit);
+				struct Account* myAcc = createAccount(accName, Deposit);
 				printAcc(myAcc);
 				free(myAcc);
-				exit(0);
+				continue;
 			//case 2:
 			//	Login();
 			//case 3:
@@ -89,7 +112,11 @@ int main() {
 			//case 6:
 			//	viewTransactionHistory();
 			case 7:
-				exit(0);
+				bool e = confirmExit();
+				if (e == true) {
+					exit(0);
+				}
+				continue;
 			default:
 				printf("Unknown option! Try again!\n");
 				continue;
