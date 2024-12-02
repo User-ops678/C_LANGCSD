@@ -83,6 +83,14 @@ void printAcc(struct Account* account) {
 	}
 }
 
+struct Account* Login(const int id) {
+	struct Account* ID = (struct Account*)malloc(sizeof(struct Account));
+	struct Account* Account;
+	if (id == Account->ID) {
+		printf("Login Successfull!\n");
+	}
+}
+
 int main() {
 	int sel;
 	struct Node* head = NULL;
@@ -101,8 +109,11 @@ int main() {
 				printAcc(myAcc);
 				free(myAcc);
 				continue;
-			//case 2:
-			//	Login();
+			case 2:
+				int ID;
+				printf("Enter Account ID: ");
+				scanf("%d", &ID);
+				Login(ID);
 			//case 3:
 			//	Deposit();
 			//case 4:
