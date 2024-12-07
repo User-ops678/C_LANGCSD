@@ -9,13 +9,17 @@ typedef struct Node {
 Node_t* createNode(int val);
 void addNode(Node_t *ptr, int val);
 void printList(Node_t* head);
+void deleteNode(Node_t* ptr, int val);
 
 int main() {
 	Node_t *head;
 	head->next = NULL;
 	addNode(head, 10);
 	addNode(head, 20);
+	addNode(head, 50);
 	addNode(head, 30);
+	printList(head);
+	deleteNode(head, 20);
 	printList(head);
 }
 Node_t* createNode(int value) {
@@ -38,4 +42,15 @@ void printList(Node_t* head) {
 		current = current->next;
 	}
 	printf("NULL\n");
+}
+void deleteNode(Node_t* ptr, int value) {
+	Node_t* tmp = ptr;
+	Node_t* prev = NULL;
+	while (tmp != NULL && tmp->value != value) {
+		prev = tmp;
+		tmp = tmp->next;
+	}
+	if (tmp == NULL) return;
+	prev->next=tmp->next;
+	free(tmp);
 }
