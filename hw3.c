@@ -62,6 +62,7 @@ int main(int argc, char *argv[]) {
 				break;
 			} else {
 				fprintf(stderr, "Unknown option %s\n", argv[1]);
+				free(head);
 				exit(EXIT_FAILURE);
 			}
 		//case 3:
@@ -88,6 +89,7 @@ int main(int argc, char *argv[]) {
 		default:
 			//wrong uasge
 			fprintf(stderr, "Usage: %s <option> [arguments]\n", argv[0]);
+			free(head);
 			exit(EXIT_FAILURE);
 	}
 	return EXIT_SUCCESS;
@@ -118,7 +120,7 @@ void addNode(node_t* head, char* name, char* year, char* income) {
 	return;
 }
 void fprintList(const char *filename, node_t* head) {
-	FILE *file = fopen(filename, "a");
+	FILE *file = fopen(filename, "ab");
 	if (file == NULL) {
 		fprintf(stderr, "Could not open to append file!\n");
 		exit(EXIT_FAILURE);
@@ -130,7 +132,7 @@ void fprintList(const char *filename, node_t* head) {
 	}
 }
 void reset(const char *filename) {
-	FILE *f = fopen(filename, "w");
+	FILE *f = fopen(filename, "wb");
 	if (f == NULL) {
 		fprintf(stderr, "Could not reset file!\n");
 		exit(EXIT_FAILURE);
@@ -170,34 +172,26 @@ void add(node_t* head, const char *name, double amount) {
 }
 
 void loadFromFile(const char *filename, node_t *head) {
-	FILE *file = fopen(filename, "r");
+	FILE *file = fopen(filename, "rb");
 	if (file == NULL) {
 		fprintf(stderr, "Could not open file to read!\n");
 		return;
 	}
-	char line[SIZE];
-	while(fgets(line, SIZE, file) != NULL) {
-		int length;
-		char name[SIZE], year[SIZE], income[SIZE];
-		if (sscanf(line, "%d %s %s %s", &length, name, year, income) == 4) {
-			addNode(head, name, year, income);
-		} else {
-			fprintf(stderr, "Skipping malformed line: %s", line);
-		}
-		fclose(file);
+	fread(head, SIZE, 4, file);
+	fclose(file);
 	}
 }
 
 void saveToFile(const char *filename, node_t *head) {
-	FILE *file = fopen(filename, "w");
-	if (file == NULL) {
+	FILE *f = fopen(filename, "wb");
+	fwrite(head, sizeof(node_t), 4, f);
+	if (f == NULL) {
 		fprintf(stderr, "Could not open file to write!\n");
 		exit(EXIT_FAILURE);
 	}
 	node_t* current = head->next;
 	while (current != NULL) {
-		fprintf(file, "%d %s %s %s\n", current->data.length, current->data.name, current->data.year, current->data.income);
+		fwrite(current, sizeof(node_t), 4, f)
 		current = current->next;
 	}
-	fclose(file);
 }
