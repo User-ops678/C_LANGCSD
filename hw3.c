@@ -21,10 +21,10 @@ typedef struct Node {
 void printList(node_t* head) {
 	node_t* current = head->next;
 	while (current != NULL) {
-		printf("%d %s %d %f -> ", current->data.length, current->data.name, current->data.year, current->data.income);
+		printf("[%d %s %d %f] -> ", current->data.length, current->data.name, current->data.year, current->data.income);
 		current = current->next;
 	}
-	printf("NULL\n");
+	printf("[NULL]\n");
 }
 #endif
 void fprintList(const char *, node_t *);
@@ -39,12 +39,13 @@ node_t* removeFront(node_t *);
 node_t* removeElt(node_t *, node_t *);
 node_t* find(node_t *, char *);
 void addNode(node_t *, char *, int, float);
+node_t* addFront(node_t *, movie_t);
+
 
 int main(int argc, char *argv[]) {
 	node_t* head = malloc(sizeof(node_t));
 	head->next = NULL;
 	FILE *f = fopen("movies.dat", "rb+");
-	node_t* list;
 	//if (head == NULL) {
 	//	fprintf(stderr, "Could not allocate memory for head!\n");
 	//	exit(EXIT_FAILURE);
@@ -58,7 +59,8 @@ int main(int argc, char *argv[]) {
 				printf("Successfully reset file!\n");
 				break;
 			} else if (strcmp(argv[1], "--list-all") == 0) {
-				list_all("movies.dat");
+				head = loadFromFile(f);
+				printList(head);
 				break;
 			} else {
 				fprintf(stderr, "Unknown option %s!\n", argv[1]);
@@ -71,11 +73,12 @@ int main(int argc, char *argv[]) {
 				//list_after("movies.dat", argv[2], head);
 				break;
 			} else if (strcmp(argv[1], "--delete") == 0) {
-				int i = 0;
-				list = loadFromFile(f);
+				head = loadFromFile(f);
+				printf("loadFromFile successfully completed!\n");
 				node_t* elt = find(head, argv[2]);
-				printf("Test %d\n", i);
+				printf("find successfully completed!\n");
 				removeElt(head, elt);
+				printf("removeElt successfully completed!\n");
 				break;
 			} else {
 				fprintf(stderr, "Unknown option %s!\n", argv[1]);
@@ -85,17 +88,17 @@ int main(int argc, char *argv[]) {
 		case 4:
 			//--add
 			const char *movieName = argv[2];
-			list = loadFromFile(f);
+			head = loadFromFile(f);
 			//float amount = atof(argv[3]);
 			//add(head, "movies.dat", amount);
-			saveToFile(list, f);
+			saveToFile(head, f);
 			break;
 		case 5:
 			char *name = argv[2];
 			int year = atoi(argv[3]);
 			float income = atof(argv[4]);
 			addNode(head, name, year, income);
-			fprintList("movies.dat", head);
+			saveToFile(head, f);
 			printf("Inserted: ");
 			printList(head);
 			break;
@@ -115,7 +118,13 @@ node_t* createNode(char *name, int year, float income) {
 		exit(EXIT_FAILURE);
 	}
 	newNode->data.length = strlen(name) + 1;
-	newNode->data.name = name;
+	newNode->data.name = strdup(name);
+	if (newNode->data.name == NULL) {
+		fprintf(stderr, "Failed to allocate memory for name!\n");
+		free(newNode);
+		exit(EXIT_FAILURE);
+	}
+	strcpy(newNode->data.name, name);
 	newNode->data.year = year;
 	newNode->data.income = income;
 	newNode->next = NULL;
@@ -123,22 +132,9 @@ node_t* createNode(char *name, int year, float income) {
 }
 void addNode(node_t* head, char *name, int year, float income) {
 	node_t* newNode = createNode(name, year, income);
-	node_t* tmp = head->next;
+	newNode->next = head->next;
 	head->next = newNode;
-	newNode->next = tmp;
 	return;
-}
-void fprintList(const char *filename, node_t* head) {
-	FILE *f = fopen(filename, "ab");
-	if(f == NULL) {
-		fprintf(stderr, "Could not open file!\n");
-		exit(EXIT_FAILURE);
-	}
-	node_t* current = head->next;
-	while (current != NULL) {
-		fwrite(current, sizeof(current), 4, f);
-		current = current->next;
-	}
 }
 void reset(const char *filename) {
 	FILE *f = fopen(filename, "wb");
@@ -146,6 +142,7 @@ void reset(const char *filename) {
 		fprintf(stderr, "Could not reset file!\n");
 		exit(EXIT_FAILURE);
 	}
+	fclose(f);
 }
 void list_all(const char *filename) {
 	FILE *f = fopen(filename, "rb");
@@ -153,49 +150,86 @@ void list_all(const char *filename) {
 		fprintf(stderr, "Could not open file!\n");
 		exit(EXIT_FAILURE);
 	}
-	node_t *ptr;
-	fread(ptr, sizeof(node_t), 4, f);
-	return;
+	node_t* head = loadFromFile(f);
+	fclose(f);
+	if(head) {
+		printList(head);
+	}else {
+		printf("[NULL]\n");
+	}
+}
+node_t* addFront(node_t* head, movie_t data) {
+	node_t* new = malloc(sizeof(node_t));
+	if(new == NULL) {
+		fprintf(stderr, "Memory allocation failed!\n");
+		exit(EXIT_FAILURE);
+	}
+	new->data = data;
+	new->next = head;
+	return new;
 }
 node_t* loadFromFile(FILE *f) {
+	if (f == NULL) {
+		fprintf(stderr, "Error: File pointer is NULL.\n");
+		return NULL;
+	}
+	rewind(f);
 	node_t* head = NULL;
 	movie_t data;
-	for (;;) {
-		fread(&data, sizeof(movie_t), 1, f);
-		if (!feof(f)) break;
-		addNode(head, data.name, data.year, data.income);
+	while (fread(&data, sizeof(movie_t), 1, f) == 1) {
+		head = addFront(head, data);
+		printf("Reading: [%d %s %d %f]...\n", data.length, data.name, data.year, data.income);
 	}
 	return head;
 }
 node_t* removeFront(node_t* head) {
+	if (head == NULL) {
+		return NULL;
+	}
 	node_t* tail = head->next;
 	free(head);
 	return tail;
 }
 node_t* removeElt(node_t *head, node_t* elt) {
-	int i = 0;
 	if (head == elt) {
 		return removeFront(head);
-		printf("Test %d\n", i);
-		i += 1;
 	}
 	if (head == NULL) {
 		fprintf(stderr, "Either there are no movies to remove or movie not found!\n");
 		return NULL;
 	}
 	head->next = removeElt(head->next, elt);
-	printf("Test %d\n", i);
-	i += 1;
 	return head;
 }
 node_t* find(node_t* head, char *data) {
-	int i = 0;
-	for(node_t* l = head; l != NULL && strcmp(l->data.name, data) == 0; l = l->next) return l;
+	if (head == NULL || data == NULL) {
+		return NULL;
+	}
+	for(node_t* l = head->next; l != NULL; l = l->next) {
+		if(l->data.name == NULL) {
+			printf("Warning: Node with NULL name enountered.\n");
+			continue;
+		}
+		if(l->data.name && strcmp(l->data.name, data) == 0) {
+			return l;
+		}
+	}
+	return NULL;
 }
 void saveToFile(node_t* head, FILE *f) {
-	rewind(f);
 	node_t* l;
-	for(l = head; l; l->next) {
-		fwrite(&l->data, sizeof(movie_t), 1, f);
+	if (f == NULL) {
+		fprintf(stderr, "File not open!\n");
+		exit(EXIT_FAILURE);
 	}
+	for(l = head; l != NULL; l = l->next) {
+		printf("Saving: [%d %s %d %f]\n", l->data.length, l->data.name, l->data.year, l->data.income);
+		fwrite(&l->data.length, sizeof(int), 1, f);
+		fwrite(l->data.name, sizeof(char), l->data.length, f);
+		fwrite(&l->data.year, sizeof(int), 1, f);
+		fwrite(&l->data.income, sizeof(float), 1, f);
+		printf("Writing: [%d %s %d %f]...\n", l->data.length, l->data.name, l->data.year, l->data.income);
+	}
+
+	fflush(f);
 }
