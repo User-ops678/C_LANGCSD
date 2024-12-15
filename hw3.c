@@ -7,7 +7,7 @@
 
 typedef struct Movie {
 	int length;
-	char *name;
+	char name[100];
 	int year;
 	float income;
 } movie_t;
@@ -111,19 +111,13 @@ int main(int argc, char *argv[]) {
 	return EXIT_SUCCESS;
 }
 
-node_t* createNode(char *name, int year, float income) {
+node_t* createNode(char name[100], int year, float income) {
 	node_t* newNode = (node_t*) malloc(sizeof(node_t));
 	if(newNode == NULL) {
 		fprintf(stderr, "Could not write new movie!\n");
 		exit(EXIT_FAILURE);
 	}
 	newNode->data.length = strlen(name) + 1;
-	newNode->data.name = strdup(name);
-	if (newNode->data.name == NULL) {
-		fprintf(stderr, "Failed to allocate memory for name!\n");
-		free(newNode);
-		exit(EXIT_FAILURE);
-	}
 	strcpy(newNode->data.name, name);
 	newNode->data.year = year;
 	newNode->data.income = income;
@@ -174,11 +168,15 @@ node_t* loadFromFile(FILE *f) {
 		return NULL;
 	}
 	rewind(f);
-	node_t* head = NULL;
+	printf("File pointer reset. Attempting to read...\n");
+	node_t* head = malloc(sizeof(node_t));
 	movie_t data;
 	while (fread(&data, sizeof(movie_t), 1, f) == 1) {
 		head = addFront(head, data);
 		printf("Reading: [%d %s %d %f]...\n", data.length, data.name, data.year, data.income);
+	}
+	if (head == NULL) {
+		printf("No data read from file.\n");
 	}
 	return head;
 }
@@ -217,19 +215,16 @@ node_t* find(node_t* head, char *data) {
 	return NULL;
 }
 void saveToFile(node_t* head, FILE *f) {
-	node_t* l;
 	if (f == NULL) {
 		fprintf(stderr, "File not open!\n");
 		exit(EXIT_FAILURE);
 	}
-	for(l = head; l != NULL; l = l->next) {
-		printf("Saving: [%d %s %d %f]\n", l->data.length, l->data.name, l->data.year, l->data.income);
-		fwrite(&l->data.length, sizeof(int), 1, f);
-		fwrite(l->data.name, sizeof(char), l->data.length, f);
-		fwrite(&l->data.year, sizeof(int), 1, f);
-		fwrite(&l->data.income, sizeof(float), 1, f);
-		printf("Writing: [%d %s %d %f]...\n", l->data.length, l->data.name, l->data.year, l->data.income);
+	rewind(f);
+	node_t* current = head->next;
+	while (current != NULL) {
+		printf("Saving: [%d %s %d %f]\n", current->data.length, current->data.name, current->data.year, current->data.income);
+		fwrite(&(current->data), sizeof(movie_t), 1, f);
+		current = current->next;
 	}
-
 	fflush(f);
 }
