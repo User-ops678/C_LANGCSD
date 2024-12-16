@@ -7,5 +7,5 @@ If you want to test your knowlage on the c programming lanuage, you can try to f
 you can try to ask me or ask the teacher! Thats it! Hope you find it usefull!
 
 
-I thought of this after Lecture #18, and im pretty sure that the other files our teacher wrote are on the lesson's site, i will try to keep up to date the other
+I thought of this after Lecture #17, and im pretty sure that the other files our teacher wrote are on the lesson's site, i will try to keep up to date the other
 language which is c++, so feel free to check that out!
