@@ -21,3 +21,5 @@ void main() {
 	x.is_valid = 3;
 	return;
 }
+
+// I'm just a comment!
